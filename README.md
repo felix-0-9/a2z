@@ -2,4 +2,4 @@
 ___
 S.No. | Topic
 --- | ---
-**1** | [Sql Injection](/resources/Sql-Injection.md)
+**1** | [Sql Injection](/resources/Sql-Injection)
