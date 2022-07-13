@@ -5,7 +5,7 @@ SQL injection is a vulnerability which allows an attacker to modify queries that
 ![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6142dd6c-6f17-4c01-8766-1ca7b8fa2cde/Untitled.png)
 [[https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6142dd6c-6f17-4c01-8766-1ca7b8fa2cde/Untitled.png|alt=octocat]]
 
-![alt text](https://github.com/felix-0-9/a2z/blob/main/images/sqli.png)
+![image](https://github.com/felix-0-9/a2z/blob/main/images/sqli.png)
 
 An SQL injection occurs when user-input is inputted into the SQL query string without properly sanitizing or filtering the input.
 
