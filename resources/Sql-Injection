@@ -3,6 +3,7 @@ An SQL injection occurs when user-input is inputted into the SQL query string wi
 SQL injection is a vulnerability which allows an attacker to modify queries that an application makes to its database via user input. This could be abused to view, modify, or delete application data which wasn't previously possible, or causing persistent changes to the application's content or behaviour.
 
 ![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6142dd6c-6f17-4c01-8766-1ca7b8fa2cde/Untitled.png)
+[[https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6142dd6c-6f17-4c01-8766-1ca7b8fa2cde/Untitled.png|alt=octocat]]
 
 An SQL injection occurs when user-input is inputted into the SQL query string without properly sanitizing or filtering the input.
 
