@@ -1,5 +1,3 @@
-# a2z
-
 # WEB 360
 ___
 S.No. | Topic
